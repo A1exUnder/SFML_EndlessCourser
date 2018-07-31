@@ -1,2 +1,4 @@
-Test ReadMe
-Version 0.1
+ReadMe EndlessCourser
+Version 0.2
+Make horse, and walking on keys
+
