@@ -6,6 +6,7 @@ using namespace sf;
 class Players //общий класс дл€ движущихс€ объектов
 {
 	public:
+		int Ground;
 		float x,y,w,h,dx,dy,speed; //координаты ширина высота скорость
 		int dir;  //направление 
 		String File; //им€ файла
@@ -17,7 +18,7 @@ class Players //общий класс дл€ движущихс€ объектов
 		{
 			dx=0;	dy=0;	speed=0;	dir=0;
 			x=X;	y=Y;	w=W;	h=H;
-			File = F;
+			File = F;	Ground=500;
 			image.loadFromFile("IM/" + File);
 			//image.createMaskFromColor(Color(41, 33, 59));  убирает фон, сделать по наличию картинок
 			texture.loadFromImage(image);
@@ -30,39 +31,64 @@ class Players //общий класс дл€ движущихс€ объектов
 				{
 					case 0: dx = speed; dy = 0; break; // 0 - вправо
 					case 1: dx = -speed; dy = 0; break; // 1 - влево
-					case 2: dx = 0; dy = speed; break;	// 2 - вниз
-					case 3: dx = 0; dy = -speed; break;	// 3 - вверх
+					case 2: /*dy = -0.5;*/ break;	// 2 - прыжок
+				
 				}
  
 			x += dx*time; // движение = ускорение на врем€
 			y += dy*time;
- 
+			//if(x<Ground)
+				//dy = dy + 0.0015*time;
 			speed = 0; // обнуление скорости
 			sprite.setPosition(x,y); // вывод спрайта
 			}
 	
+};
+
+class Backround // ласс фона
+{
+	public:
+		float x,w,h; // Y отсутствует т.к. анимаци€ фона происходит только по X
+		String File;
+		Image image;  // —‘ћЋ картинка , текстура , спрайт
+		Texture texture, texture1;
+		Sprite sprite, sprite1;
+
+		Backround(String F)
+		{
+			x=0; w=1280; h=720; File = F;
+			image.loadFromFile("BG/" + File);
+			texture.loadFromImage(image);
+			sprite.setTexture(texture);
+			sprite.setTextureRect(IntRect(0, 0, 1280, 720));
+		}
+		void BgUpdate(float time)
+		{
+			texture1.loadFromImage(image);
+			sprite1.setTexture(texture1);
+			sprite1.setTextureRect(IntRect(0, 0, 1280, 720));
 		
+			if(x<0)
+				x=1280;
+			x-=0.1*time;
+			sprite1.setPosition(x-1280,0);
+			sprite.setPosition(x,0);
+		}
 };
 
 int main()
 {
-	RenderWindow window(sf::VideoMode(1280, 720), "Lesson 5. kychka-pc.ru");
- 
- 
-	
-	Texture herotexture;
-	herotexture.loadFromFile("IM/lowadi.png");
- 
-	Sprite herosprite;
-	herosprite.setTexture(herotexture);
-	herosprite.setTextureRect(IntRect(0, 0, 64, 64));//получили нужный нам пр€моугольник с котом
-	herosprite.setPosition(250,250); //выводим спрайт в позицию x y 
- 
-	
- 
+	RenderWindow window(sf::VideoMode(1280, 720), "EndlessCourser <3");
+	float CurFrame=0;
+	Clock clock;
+	Backround Fon("Forest.png");
+	Players Hero("lowadi.png",500,500,64,64);
+
 	while (window.isOpen())
 	{
-		
+		float time = clock.getElapsedTime().asMicroseconds();
+		clock.restart();
+		time = time / 800;
  
 		sf::Event event;
 		while (window.pollEvent(event))
@@ -70,14 +96,44 @@ int main()
 			if (event.type == sf::Event::Closed)			
 			window.close();
 		}
+		
+		if ((Keyboard::isKeyPressed(Keyboard::Left) || (Keyboard::isKeyPressed(Keyboard::A)))) 
+		{
+			Hero.dir = 1; Hero.speed = 0.2;//dir =1 - направление вверх, speed =0.1 - скорость движени€. «аметьте - врем€ мы уже здесь ни на что не умножаем и нигде не используем каждый раз
+			CurFrame += 0.005*time;
+			if (CurFrame > 4) CurFrame -= 4; 
+			Hero.sprite.setTextureRect(IntRect(64 * int(CurFrame), 128, 64, 64)); //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
+		} 
+		else
+		{
+			CurFrame += 0.008*time;
+			if (CurFrame > 4) CurFrame -= 4; 
+			Hero.sprite.setTextureRect(IntRect(64 * int(CurFrame), 128, 64, 64));
+		}
+
+		if ((Keyboard::isKeyPressed(Keyboard::Right) || (Keyboard::isKeyPressed(Keyboard::D)))) 
+		{
+			Hero.dir = 0; Hero.speed = 0.2;//направление вправо, см выше
+			 //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
+		}
  
-		if (Keyboard::isKeyPressed(Keyboard::Left)) { herosprite.move(-0.1, 0); } 
-		if (Keyboard::isKeyPressed(Keyboard::Right)) { herosprite.move(0.1, 0); } 
-		if (Keyboard::isKeyPressed(Keyboard::Up)) { herosprite.move(0, -0.1); } 
-		if (Keyboard::isKeyPressed(Keyboard::Down)) { herosprite.move(0, 0.1); } 
+		if ((Keyboard::isKeyPressed(Keyboard::Up) || (Keyboard::isKeyPressed(Keyboard::W)))) 
+		{ 
+			Hero.dir = 2; Hero.speed = 0.2;//прыжок
+			//CurrentFrame += 0.005*time;
+			//if (CurrentFrame > 3) CurrentFrame -= 3;
+			//p.sprite.setTextureRect(IntRect(96 * int(CurrentFrame), 288, 96, 96));  //через объект p класса player мен€ем спрайт, дела€ анимацию (использу€ оператор точку)
+			
+		}
+			
+			
+		Fon.BgUpdate(time);
+		Hero.update(time);
  
 		window.clear();
-		window.draw(herosprite);
+		window.draw(Fon.sprite1);
+		window.draw(Fon.sprite);
+		window.draw(Hero.sprite);
 		window.display();
 	}
  
